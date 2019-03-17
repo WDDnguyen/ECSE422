@@ -23,11 +23,6 @@ public class Network {
 
         initializeVertices(networkGraph);
         createEdges(edges, networkGraph);
-
-        for (Edge edge : edges){
-            // System.out.println("EDGE SOURCE ID : " + edge.source.getId() + " DEST ID : " + edge.destination.getId() + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
-        }
-
         System.out.println("-----------------------------------");
 
         Collections.sort(edges);
@@ -36,158 +31,25 @@ public class Network {
             System.out.println("EDGE SOURCE ID : " + edge.source.getId() + " DEST ID : " + edge.destination.getId() + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
         }
 
-        for(Edge edge : edges){
-
-            if(networkGraph.vertexMap.get(edge.source).size() == 1 || networkGraph.vertexMap.get(edge.destination).size() == 1){
-                //System.out.println("CONNECTING TWO VERTICES WITH EDGE");
-
-                // Source Vertex
-                edge.source.addEdge(edge);
-                // add itself vertex, destination to source
-                HashSet<Vertex> hs = networkGraph.vertexMap.get(edge.source);
-                hs.add(edge.destination);
-                hs.add(edge.source);
-                networkGraph.vertexMap.put(edge.source, hs);
-                edge.source.addEdge(edge);
-
-                // add destination vertex itself, source to destination
-
-                HashSet<Vertex> hs2 = networkGraph.vertexMap.get(edge.destination);
-                hs2.add(edge.destination);
-                hs2.add(edge.source);
-                networkGraph.vertexMap.put(edge.destination, hs2);
-                edge.destination.addEdge(edge);
-
-                System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
-                //System.out.println("SIZE OF SOURCE HASHSET " + networkGraph.vertexMap.get(edge.source).size() + " SIZE OF DEST HASHSET : " + networkGraph.vertexMap.get(edge.destination).size());
-
-                networkGraph.addEdge(edge);
-            }
-        }
-
-        // calculate current reliability
-        double currentReliability = 1;
-        for(Edge edge : networkGraph.getNetworkEdges()){
-            currentReliability *= edge.getReliability();
-        }
-
-        System.out.println("CURRENT TOTAL RELIABILITY : " + currentReliability);
-
+        addEdgeToGraph(networkGraph, edges);
+        double spanningReliability = calculateSpanningTreeReliability(networkGraph);
         double targetReliability = 0.85;
 
-        if (currentReliability < targetReliability){
-            // add new edge base on the 2 lowest reliable edges
-            System.out.println("LOWEST EDGE : " + networkGraph.getLowestReliableEdge().getReliability() + " SECOND LOWEST EDGE : " + networkGraph.getSecondLowestEdge().getReliability());
-            Vertex vertex1 = networkGraph.getLowestReliableEdge().destination;
-            Vertex vertex2 = networkGraph.getSecondLowestEdge().destination;
+        if (spanningReliability < targetReliability){
+            System.out.println("SPANNING TREE RELIABILITY IS : " + spanningReliability);
 
-            Vertex edgeSource;
-            Vertex edgeDestination;
-            if (vertex1.getId() > vertex2.getId()){
-                edgeSource = vertex2;
-                edgeDestination = vertex1;
-            }else {
-                edgeSource = vertex1;
-                edgeDestination = vertex2;
-            }
+            Edge additionalEdge = findEdge(networkGraph, edges);
+            updateGraph(networkGraph, additionalEdge);
 
-            // find edge with source and destination
+            // ENUMERATION
 
-            Edge newEdge = null;
-            for (Edge edge : edges){
-                if (edge.source.equals(edgeSource) && edge.destination.equals(edgeDestination)){
-                    newEdge = edge;
-                    System.out.println("NEW EDGE TO BE ADDED SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.getReliability());
-                }
-            }
-            // NEED TO CREATE NEW GRAPH WITH EDGE
-            networkGraph.addEdge(newEdge);
-
-            int arr[] = new int[networkGraph.getNetworkEdges().size()];
-            for (int i = 0; i< arr.length; i++){
-                arr[i] = i;
-            }
-
-            int r = numberOfCities - 1;
-            int n = arr.length;
-
-            System.out.println("n : " + n + " r : " + r);
-
-            ArrayList<Integer[]> combinationValues = new ArrayList<>();
-
-            for(int i = r; i <= n; i++){
-                printCombination(arr, n, i, combinationValues);
-            }
-
-            System.out.println("FIND ALL RELIABILITY VALUES");
-
-            double totalReliability = 0;
-            for (Integer[] combination : combinationValues){
-                double reliability = 1;
-                //Arrays.sort(combination);
-                for (Integer value : combination){
-                    reliability *= networkGraph.getNetworkEdges().get(value).getReliability();
-                }
-                for (int i = 0; i < n; i++){
-                    if (Arrays.binarySearch(combination, i) < 0){
-                        reliability *= (1 - networkGraph.getNetworkEdges().get(i).getReliability());
-                    }
-                }
-                System.out.println("Adding reliability " + reliability);
-                totalReliability += reliability;
-            }
-
-            System.out.println("TOTAL RELIABILITY : " + totalReliability);
+            ArrayList<Integer[]> combinationList = new ArrayList<>();
+            findCombination(networkGraph, combinationList);
+            double totalReliability = calculateTotalReliability(networkGraph, combinationList);
 
             if (totalReliability >= targetReliability){
                 System.out.println("OBTAINED TARGET RELIABILITY");
             }
-
-//            ArrayList<Edge> path = BFS(networkGraph,newEdge.source, newEdge.destination);
-//
-//            double reliabilityAllWorking = 1;
-//            System.out.println("PATH VERTEX : ");
-//            for(Edge edge : path){
-//                reliabilityAllWorking *= edge.getReliability();
-//            }
-//
-//            System.out.println("ALL WORKING RELIABILITY : " + reliabilityAllWorking);
-//
-//            // calculate all reliability if one doesnt work
-//            double restOfProbability = 1;
-
-//            for(int i = 0; i < path.size(); i++){
-//                double reliabilityOneNotWorking = 1;
-//                for (Edge edge : path){
-//                    if (!(edge.equals(path.get(i)))){
-//                        reliabilityOneNotWorking *= edge.getReliability();
-//                    } else {
-//                        reliabilityOneNotWorking *= (1 - edge.getReliability());
-//                    }
-//
-//                }
-//
-//                System.out.println("reliabilityOneNotWorking : " + reliabilityOneNotWorking);
-//                restOfProbability += reliabilityOneNotWorking;
-//
-//            }
-//            System.out.println("REST PROBABILITY " + restOfProbability);
-
-            // get all relevant edges to calculate reliability
-
-            //double failureRate = 1 - newEdge.getReliability();
-            //System.out.println("Failure Rate : " + failureRate);
-
-
-            // reliability when new edge not working
-            //double edgeNotWorkingReliability = currentReliability * failureRate;
-
-            // reliability when new edge working
-
-           // double edgeWorkingReliability = newEdge.getReliability()*
-
-           // double newReliability =
-
         }
 
 
@@ -330,8 +192,172 @@ public class Network {
 
     }
 
-    public static void printCombination(int arr[], int n, int r, ArrayList<Integer[]> combinationValue){
+    public static void getCombinations(int arr[], int n, int r, ArrayList<Integer[]> combinationValue){
         int data[] = new int[r];
         combination(arr, data, 0 , n-1, 0, r, combinationValue);
     }
+
+    public static void addEdgeToGraph(Graph networkGraph, ArrayList<Edge> edges){
+        for(Edge edge : edges){
+
+            if(networkGraph.vertexMap.get(edge.source).size() == 1 || networkGraph.vertexMap.get(edge.destination).size() == 1){
+
+                // Source Vertex
+                edge.source.addEdge(edge);
+                // add itself vertex, destination to source
+                HashSet<Vertex> hs = networkGraph.vertexMap.get(edge.source);
+                hs.add(edge.destination);
+                hs.add(edge.source);
+                networkGraph.vertexMap.put(edge.source, hs);
+                edge.source.addEdge(edge);
+
+                // add destination vertex itself, source to destination
+
+                HashSet<Vertex> hs2 = networkGraph.vertexMap.get(edge.destination);
+                hs2.add(edge.destination);
+                hs2.add(edge.source);
+                networkGraph.vertexMap.put(edge.destination, hs2);
+                edge.destination.addEdge(edge);
+
+                System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
+
+                networkGraph.addEdge(edge);
+            }
+        }
+    }
+
+    public static double calculateSpanningTreeReliability(Graph networkGraph){
+
+        double spanningTreeReliability = 1;
+        for(Edge edge : networkGraph.getNetworkEdges()){
+            spanningTreeReliability *= edge.getReliability();
+        }
+
+        System.out.println("CURRENT TOTAL RELIABILITY : " + spanningTreeReliability);
+        return spanningTreeReliability;
+    }
+
+    public static Edge findEdge(Graph networkGraph, ArrayList<Edge> edges){
+        // add new edge base on the 2 lowest reliable edges
+        System.out.println("LOWEST EDGE : " + networkGraph.getLowestReliableEdge().getReliability() + " SECOND LOWEST EDGE : " + networkGraph.getSecondLowestEdge().getReliability());
+        Vertex vertex1 = networkGraph.getLowestReliableEdge().destination;
+        Vertex vertex2 = networkGraph.getSecondLowestEdge().destination;
+
+        Vertex edgeSource;
+        Vertex edgeDestination;
+        if (vertex1.getId() > vertex2.getId()){
+            edgeSource = vertex2;
+            edgeDestination = vertex1;
+        }else {
+            edgeSource = vertex1;
+            edgeDestination = vertex2;
+        }
+
+        // find edge with source and destination
+
+        Edge newEdge = null;
+        for (Edge edge : edges){
+            if (edge.source.equals(edgeSource) && edge.destination.equals(edgeDestination)){
+                newEdge = edge;
+                System.out.println("NEW EDGE TO BE ADDED SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.getReliability());
+            }
+        }
+
+        return newEdge;
+    }
+
+    public static void findCombination(Graph networkGraph, ArrayList<Integer[]> combinationList){
+
+        int arr[] = new int[networkGraph.getNetworkEdges().size()];
+        for (int i = 0; i < arr.length; i++){
+            arr[i] = i;
+        }
+
+        int r = numberOfCities - 1;
+        int n = arr.length;
+
+        for(int i = r; i <= n; i++){
+            getCombinations(arr, n, i, combinationList);
+        }
+    }
+
+    public static double calculateTotalReliability(Graph networkGraph, ArrayList<Integer[]> combinationList){
+        double totalReliability = 0;
+
+        for (Integer[] combination : combinationList){
+            ArrayList<Edge> edges = convertCombinationToEdges(networkGraph, combination);
+            if (checkConnectivity(networkGraph,edges)){
+                double reliability = 1;
+
+                for(Edge edge : edges){
+                    reliability *= edge.getReliability();
+                }
+
+                for (int i = 0; i < networkGraph.getNetworkEdges().size(); i++){
+                    if (Arrays.binarySearch(combination, i) < 0){
+                        reliability *= (1 - networkGraph.getNetworkEdges().get(i).getReliability());
+                    }
+                }
+                System.out.println("Adding reliability " + reliability);
+                totalReliability += reliability;
+            }
+        }
+
+        System.out.println("TOTAL RELIABILITY : " + totalReliability);
+        return totalReliability;
+    }
+
+    public static void updateGraph(Graph networkGraph, Edge edge){
+        Vertex source = edge.source;
+        Vertex destination = edge.destination;
+
+        source.addEdge(edge);
+        HashSet<Vertex> hs = networkGraph.vertexMap.get(source);
+        hs.add(destination);
+        networkGraph.vertexMap.put(source, hs);
+
+
+        destination.addEdge(edge);
+        HashSet<Vertex> hs2 = networkGraph.vertexMap.get(edge.destination);
+        hs2.add(destination);
+        networkGraph.vertexMap.put(destination, hs2);
+
+        System.out.println("UPDATE : ADD EDGE SOURCE ID : " + (source.getId() + 1) + " DEST ID : " + (destination.getId() + 1) + " RELIABILITY : " + edge.getReliability() + " COST : " + edge.getReliability());
+
+        networkGraph.addEdge(edge);
+    }
+
+    public static boolean checkConnectivity(Graph networkGraph, ArrayList<Edge> edges) {
+        boolean[] visitedVertices = new boolean[networkGraph.vertexMap.keySet().size()];
+        Arrays.fill(visitedVertices, Boolean.FALSE);
+
+        // verify if every node is connected
+        for (Edge edge : edges) {
+            if (!visitedVertices[edge.source.getId()]) {
+                visitedVertices[edge.source.getId()] = true;
+            }
+
+            if (!visitedVertices[edge.destination.getId()]) {
+                visitedVertices[edge.destination.getId()] = true;
+            }
+
+        }
+
+        for (boolean visited : visitedVertices){
+            if (!visited){
+                System.out.println("GRAPH NOT CONNECTED WITH THIS COMBINATION");
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static ArrayList<Edge> convertCombinationToEdges(Graph networkGraph, Integer[] combinationList){
+        ArrayList<Edge> edges = new ArrayList<>();
+        for (Integer index : combinationList){
+            edges.add(networkGraph.getNetworkEdges().get(index));
+        }
+        return edges;
+    }
 }
+
