@@ -18,10 +18,10 @@ public class Edge implements Comparable<Edge> {
 
         /* For Ascending order*/
         if(this.reliability < compareedge) {
-            if (this.cost < compareCost) {
+            if (this.cost <= compareCost) {
                 return 1;
             }
-        }else if(compareedge<this.reliability)
+        }else if(compareedge < this.reliability)
             return -1;
         return 0;
 

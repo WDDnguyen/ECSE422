@@ -12,14 +12,41 @@ public class Network {
     private static int numberOfCities;
     private static ArrayList<Double> reliabilityMajorMatrix;
     private static ArrayList<Integer> costMajorMatrix;
-    private static double targetReliability = 0.85;
+    private static double targetReliability;
+    private static double targetCost;
     private static double spanningReliability;
     private static double totalReliability;
+    private static int reliabilityConstraint;
 
     public static void main (String[] args){
+
+        if (args.length > 0){
+            // if args 2  then reliabilty and cost given
+            // if arg 1 -> cost or reliability
+            if (args.length == 2){
+                targetReliability = Double.parseDouble(args[1]);
+                targetCost = Integer.parseInt(args[2]);
+                reliabilityConstraint = 3;
+
+            } else if (args.length == 1){
+                if (Double.valueOf(args[1]) != null){
+                    targetReliability = Double.parseDouble(args[1]);
+                    reliabilityConstraint = 1;
+                } else {
+                    targetCost = Integer.parseInt(args[1]);
+                    reliabilityConstraint = 2;
+                }
+            }
+        } else {
+            targetReliability = 0.85;
+            targetCost = 70;
+            reliabilityConstraint = 1;
+        }
+
         Graph networkGraph = new Graph();
         reliabilityMajorMatrix = new ArrayList<Double>();
         costMajorMatrix = new ArrayList<Integer>();
+
         readInputFile();
 
         ArrayList<Edge> edges = new ArrayList<>();
@@ -28,7 +55,38 @@ public class Network {
         createEdges(edges, networkGraph);
         System.out.println("-----------------------------------");
 
-        Collections.sort(edges);
+         if (reliabilityConstraint == 1){
+             Comparator<Edge> reliabilityOrder = Comparator.comparing(Edge::getReliability, Comparator.reverseOrder()).thenComparing(Edge::getCost);
+             Collections.sort(edges, reliabilityOrder);
+         }
+         else if (reliabilityConstraint == 2 || reliabilityConstraint == 3){
+            Comparator<Edge> costOrder = Comparator.comparing(Edge::getCost).thenComparing(Edge::getReliability, Comparator.reverseOrder());
+            Collections.sort(edges, costOrder);
+        }
+
+        for(Edge edge : edges){
+            System.out.println("SORTED EDGE WITH CITY " + (edge.source.getId() + 1)
+                    + " AND CITY : " + (edge.destination.getId() + 1)
+                    + " EDGE RELIABILITY : " + edge.getReliability()
+                    + " EDGE COST : " + edge.getCost());
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+       // Collections.sort(edges);
 
         for(Edge edge: edges){
             System.out.println("EDGE SOURCE ID : " + edge.source.getId() + " DEST ID : " + edge.destination.getId() + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
