@@ -12,6 +12,9 @@ public class Network {
     private static int numberOfCities;
     private static ArrayList<Double> reliabilityMajorMatrix;
     private static ArrayList<Integer> costMajorMatrix;
+    private static double targetReliability = 0.85;
+    private static double spanningReliability;
+    private static double totalReliability;
 
     public static void main (String[] args){
         Graph networkGraph = new Graph();
@@ -32,8 +35,8 @@ public class Network {
         }
 
         addEdgeToGraph(networkGraph, edges);
-        double spanningReliability = calculateSpanningTreeReliability(networkGraph);
-        double targetReliability = 0.85;
+        spanningReliability = calculateSpanningTreeReliability(networkGraph);
+
 
         if (spanningReliability < targetReliability){
             System.out.println("SPANNING TREE RELIABILITY IS : " + spanningReliability);
@@ -45,10 +48,11 @@ public class Network {
 
             ArrayList<Integer[]> combinationList = new ArrayList<>();
             findCombination(networkGraph, combinationList);
-            double totalReliability = calculateTotalReliability(networkGraph, combinationList);
+            totalReliability = calculateTotalReliability(networkGraph, combinationList);
 
             if (totalReliability >= targetReliability){
                 System.out.println("OBTAINED TARGET RELIABILITY");
+                displayGraphInformation(networkGraph);
             }
         }
 
@@ -73,71 +77,6 @@ public class Network {
                 matrixIndex++;
             }
         }
-    }
-
-    public static ArrayList<Edge> getPath (HashMap<Vertex,Vertex> parents, Vertex source, Vertex destination){
-        ArrayList<Vertex> path = new ArrayList<>();
-        ArrayList<Edge> G2Edges = new ArrayList<>();
-
-        path.add(destination);
-        Vertex currentNode = destination;
-        Vertex parent = parents.get(currentNode);
-        System.out.println("CURRENT NODE " + currentNode.getId() + 1);
-        System.out.println("PARENT NODE : " + (parent.getId() + 1));
-        while(parent != source){
-            path.add(parent);
-            G2Edges.add(currentNode.getEdge(parent));
-            System.out.println("G2 EDGE ADDED " + (currentNode.getEdge(parent).source.getId() + 1) + " DEST " + (currentNode.getEdge(parent).destination.getId() + 1));
-
-            currentNode = parent;
-            parent = parents.get(currentNode);
-          //  System.out.println("ADDED VERTEX ID : " + parent.getId());
-        }
-
-        // add last element
-        path.add(parent);
-        G2Edges.add(currentNode.getEdge(parent));
-        System.out.println("G2 EDGE ADDED " + (currentNode.getEdge(parent).source.getId() + 1) + " DEST " + (currentNode.getEdge(parent).destination.getId() + 1));
-
-        System.out.println("G2 Edge " + G2Edges.size());
-
-        System.out.println("DONE FINDING PATH");
-
-
-       // return path;
-        return G2Edges;
-    }
-
-    // prints BFS traversal from a given source
-    public static ArrayList<Edge> BFS(Graph networkGraph, Vertex source, Vertex destination)
-    {
-        HashMap<Vertex, Vertex> parents = new HashMap<>();
-        Vertex parent = source;
-       Queue<Vertex> queue = new LinkedList<>();
-       ArrayList<Vertex> visitedVertices = new ArrayList<>();
-
-       queue.add(source);
-       visitedVertices.add(source);
-
-       while(!queue.isEmpty()){
-           Vertex v = queue.remove();
-           if (v.equals(destination)){
-               System.out.println("LAST NODE");
-               return getPath(parents, source, destination);
-
-           }
-           for (Vertex neighbor : networkGraph.vertexMap.get(v)){
-               if (!visitedVertices.contains(neighbor)){
-                   queue.add(neighbor);
-                   visitedVertices.add(neighbor);
-                   parent = v;
-                  // System.out.println("ADDED VERTEX " + (neighbor.getId() + 1));
-                   parents.put(neighbor, parent);
-                  // System.out.println("PARENT ID " + (parent.getId() + 1));
-               }
-           }
-       }
-       return null;
     }
 
     public static void readInputFile(){
@@ -358,6 +297,24 @@ public class Network {
             edges.add(networkGraph.getNetworkEdges().get(index));
         }
         return edges;
+    }
+
+    public static void displayGraphInformation(Graph networkGraph){
+        ArrayList<Edge> finalEdges = networkGraph.getNetworkEdges();
+
+        System.out.println("----- NETWORK DESIGN -----");
+        System.out.println("----- EDGES -----");
+        for(Edge edge : finalEdges){
+            System.out.println("CONNECTED EDGE WITH CITY " + (edge.source.getId() + 1)
+            + " AND CITY : " + (edge.destination.getId() + 1)
+            + " EDGE RELIABILITY : " + edge.getReliability()
+            + " EDGE COST : " + edge.getCost());
+        }
+        System.out.println("----- RELIABILITY -----");
+        System.out.println("DESIGN SPANNING RELIABILITY : " + spanningReliability);
+        System.out.println("DESIGN TARGET RELIABILITY " + targetReliability);
+        System.out.println("DESIGN OPTIMIZED RELIABILITY " + totalReliability);
+        System.out.println("----- END -----");
     }
 }
 
