@@ -13,43 +13,25 @@ public class Network {
     private static ArrayList<Double> reliabilityMajorMatrix;
     private static ArrayList<Integer> costMajorMatrix;
     private static double targetReliability;
-    private static double targetCost;
+    private static int targetCost;
+
     private static double spanningReliability;
+    private static int spanningCost;
+
     private static double totalReliability;
+    private static int totalCost;
     private static int reliabilityConstraint;
+    private static int amountOfSpanningEdges;
 
     public static void main (String[] args){
 
-        if (args.length > 0){
-            // if args 2  then reliabilty and cost given
-            // if arg 1 -> cost or reliability
-            if (args.length == 2){
-                targetReliability = Double.parseDouble(args[1]);
-                targetCost = Integer.parseInt(args[2]);
-                reliabilityConstraint = 3;
-
-            } else if (args.length == 1){
-                if (Double.valueOf(args[1]) != null){
-                    targetReliability = Double.parseDouble(args[1]);
-                    reliabilityConstraint = 1;
-                } else {
-                    targetCost = Integer.parseInt(args[1]);
-                    reliabilityConstraint = 2;
-                }
-            }
-        } else {
-            targetReliability = 0.85;
-            targetCost = 70;
-            reliabilityConstraint = 1;
-        }
-
+        parseArguments(args);
         Graph networkGraph = new Graph();
-        reliabilityMajorMatrix = new ArrayList<Double>();
-        costMajorMatrix = new ArrayList<Integer>();
+        reliabilityMajorMatrix = new ArrayList<>();
+        costMajorMatrix = new ArrayList<>();
+        ArrayList<Edge> edges = new ArrayList<>();
 
         readInputFile();
-
-        ArrayList<Edge> edges = new ArrayList<>();
 
         initializeVertices(networkGraph);
         createEdges(edges, networkGraph);
@@ -63,7 +45,7 @@ public class Network {
             Comparator<Edge> costOrder = Comparator.comparing(Edge::getCost).thenComparing(Edge::getReliability, Comparator.reverseOrder());
             Collections.sort(edges, costOrder);
         }
-
+         
         for(Edge edge : edges){
             System.out.println("SORTED EDGE WITH CITY " + (edge.source.getId() + 1)
                     + " AND CITY : " + (edge.destination.getId() + 1)
@@ -71,49 +53,80 @@ public class Network {
                     + " EDGE COST : " + edge.getCost());
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-       // Collections.sort(edges);
-
-        for(Edge edge: edges){
-            System.out.println("EDGE SOURCE ID : " + edge.source.getId() + " DEST ID : " + edge.destination.getId() + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
-        }
-
         addEdgeToGraph(networkGraph, edges);
+        amountOfSpanningEdges = networkGraph.getNetworkEdges().size();
         spanningReliability = calculateSpanningTreeReliability(networkGraph);
+        spanningCost = calculateSpanningTreeCost(networkGraph);
 
+        // value changes based on contraints
+        // 1 - Only need to get largest target
+        // 2 - Need to get reliability based on cost constraint
+        // 3 - maximize reliability
 
-        if (spanningReliability < targetReliability){
-            System.out.println("SPANNING TREE RELIABILITY IS : " + spanningReliability);
+        double currentReliability = spanningReliability;
+        int currentCost = spanningCost;
 
-            Edge additionalEdge = findEdge(networkGraph, edges);
-            updateGraph(networkGraph, additionalEdge);
+        // meet target reliability
+        if (reliabilityConstraint == 1){
+            while (currentReliability <= targetReliability){
+                System.out.println("CURRENT RELIABILITY IS : " + currentReliability);
 
-            // ENUMERATION
+                // TO DO : NEED TO VERIFY IF LOWEST EDGES DOESNT WORK.
+                Edge additionalEdge = findEdge(networkGraph, edges);
+                updateGraph(networkGraph, additionalEdge);
 
-            ArrayList<Integer[]> combinationList = new ArrayList<>();
-            findCombination(networkGraph, combinationList);
-            totalReliability = calculateTotalReliability(networkGraph, combinationList);
+                // ENUMERATION
+                ArrayList<Integer[]> combinationList = new ArrayList<>();
+                findCombination(networkGraph, combinationList);
+                currentReliability = calculateTotalReliability(networkGraph, combinationList);
 
-            if (totalReliability >= targetReliability){
+                }
                 System.out.println("OBTAINED TARGET RELIABILITY");
+                totalReliability = currentReliability;
                 displayGraphInformation(networkGraph);
-            }
         }
+        //  meet constraint reliability
+        else if (reliabilityConstraint == 2){
+            while (currentCost < targetCost && currentReliability < targetReliability){
+                Edge additionalEdge = getLowestAvailableCostEdge(networkGraph, edges);
+                updateGraph(networkGraph, additionalEdge);
 
+                // ENUMERATION
+                ArrayList<Integer[]> combinationList = new ArrayList<>();
+                findCombination(networkGraph, combinationList);
+                currentReliability = calculateTotalReliability(networkGraph, combinationList);
+                currentCost = calculateTotalCost(networkGraph);
+
+            }
+
+            if (currentReliability >= targetReliability && currentCost <= targetCost){
+                System.out.println("OBTAINED TARGET RELIABILITY WITH COST CONSTRAINT");
+                totalReliability = currentReliability;
+                totalCost = currentCost;
+                displayGraphInformation(networkGraph);
+            } else {
+                System.out.println("CANNOT FIND DESIGN WITH TARGET RELIABILITY : " + targetReliability + " AND COST : " + targetCost);
+            }
+
+        } else if (reliabilityConstraint == 3){
+            while (currentCost < targetCost){
+                Edge additionalEdge = getLowestAvailableCostEdge(networkGraph, edges);
+                updateGraph(networkGraph, additionalEdge);
+
+                // ENUMERATION
+                ArrayList<Integer[]> combinationList = new ArrayList<>();
+                findCombination(networkGraph, combinationList);
+                currentReliability = calculateTotalReliability(networkGraph, combinationList);
+                currentCost = calculateTotalCost(networkGraph);
+
+            }
+
+            System.out.println("MAXIMIZED RELIABILITY WITH COST CONSTRAINT");
+            totalReliability = currentReliability;
+            totalCost = currentCost;
+            displayGraphInformation(networkGraph);
+
+        }
 
     }
 
@@ -234,6 +247,17 @@ public class Network {
         return spanningTreeReliability;
     }
 
+    public static int calculateSpanningTreeCost(Graph networkGraph){
+        int cost = 0;
+        for(Edge edge : networkGraph.getNetworkEdges()){
+            cost += edge.getCost();
+        }
+
+        System.out.println("CURRENT COST : " + cost);
+        return cost;
+
+    }
+
     public static Edge findEdge(Graph networkGraph, ArrayList<Edge> edges){
         // add new edge base on the 2 lowest reliable edges
         System.out.println("LOWEST EDGE : " + networkGraph.getLowestReliableEdge().getReliability() + " SECOND LOWEST EDGE : " + networkGraph.getSecondLowestEdge().getReliability());
@@ -263,6 +287,15 @@ public class Network {
         return newEdge;
     }
 
+    public static Edge getLowestAvailableCostEdge(Graph networkGraph, ArrayList<Edge> edges){
+        for(Edge edge : edges){
+            if(!networkGraph.getNetworkEdges().contains(edge)){
+                return edge;
+            }
+        }
+        return null;
+    }
+
     public static void findCombination(Graph networkGraph, ArrayList<Integer[]> combinationList){
 
         int arr[] = new int[networkGraph.getNetworkEdges().size()];
@@ -270,10 +303,9 @@ public class Network {
             arr[i] = i;
         }
 
-        int r = numberOfCities - 1;
         int n = arr.length;
 
-        for(int i = r; i <= n; i++){
+        for(int i = amountOfSpanningEdges; i <= n; i++){
             getCombinations(arr, n, i, combinationList);
         }
     }
@@ -302,6 +334,17 @@ public class Network {
 
         System.out.println("TOTAL RELIABILITY : " + totalReliability);
         return totalReliability;
+    }
+
+    public static int calculateTotalCost(Graph networkGraph){
+        int totalCost = 0;
+
+        for(Edge edge : networkGraph.getNetworkEdges()){
+            totalCost += edge.getCost();
+        }
+
+        System.out.println("TOTAL cost : " + totalCost);
+        return totalCost;
     }
 
     public static void updateGraph(Graph networkGraph, Edge edge){
@@ -357,6 +400,31 @@ public class Network {
         return edges;
     }
 
+    public static void parseArguments(String[] args){
+        if (args.length > 0){
+            // if args 2  then reliabilty and cost given
+            // if arg 1 -> cost or reliability
+            if (args.length == 3){
+                targetReliability = Double.parseDouble(args[2]);
+                targetCost = Integer.parseInt(args[3]);
+                reliabilityConstraint = 2;
+
+            } else if (args.length == 2){
+                if (Double.valueOf(args[1]) != null){
+                    targetReliability = Double.parseDouble(args[2]);
+                    reliabilityConstraint = 1;
+                } else {
+                    targetCost = Integer.parseInt(args[2]);
+                    reliabilityConstraint = 3;
+                }
+            }
+        } else {
+            targetReliability = 0.85;
+            targetCost = 110;
+            reliabilityConstraint = 2;
+        }
+    }
+
     public static void displayGraphInformation(Graph networkGraph){
         ArrayList<Edge> finalEdges = networkGraph.getNetworkEdges();
 
@@ -370,8 +438,18 @@ public class Network {
         }
         System.out.println("----- RELIABILITY -----");
         System.out.println("DESIGN SPANNING RELIABILITY : " + spanningReliability);
-        System.out.println("DESIGN TARGET RELIABILITY " + targetReliability);
-        System.out.println("DESIGN OPTIMIZED RELIABILITY " + totalReliability);
+        if (reliabilityConstraint == 1 || reliabilityConstraint == 2){
+            System.out.println("DESIGN TARGET RELIABILITY : " + targetReliability);
+        }
+        System.out.println("DESIGN OPTIMIZED RELIABILITY : " + totalReliability);
+        if (reliabilityConstraint == 2 || reliabilityConstraint == 3){
+            System.out.println("----- COST -----");
+            System.out.println("DESIGN SPANNING COST : " + spanningCost);
+            if (reliabilityConstraint == 2){
+                System.out.println("DESIGN TARGET COST : " + targetCost);
+            }
+            System.out.println("DESIGN OPTIMIZED COST : " + totalCost);
+        }
         System.out.println("----- END -----");
     }
 }
