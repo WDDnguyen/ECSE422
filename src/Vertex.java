@@ -15,6 +15,10 @@ public class Vertex {
         edges.add(edge);
     }
 
+    public void removeEdge(Edge edge){
+        edges.remove(edge);
+    }
+
     public Edge getEdge(Vertex destination){
 
         for (Edge edge : edges){

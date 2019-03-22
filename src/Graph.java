@@ -14,7 +14,6 @@ public class Graph {
     public void addVertex(int id) {
         Vertex vertex = new Vertex(id);
         HashSet<Vertex> vertSet = new HashSet<Vertex>();
-        vertSet.add(vertex);
         vertexMap.put(vertex, vertSet);
     }
 
