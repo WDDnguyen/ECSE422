@@ -12,6 +12,7 @@ public class Network {
     private static int numberOfCities;
     private static ArrayList<Double> reliabilityMajorMatrix;
     private static ArrayList<Integer> costMajorMatrix;
+    private static String fileName;
     private static double targetReliability;
     private static int targetCost;
 
@@ -31,7 +32,7 @@ public class Network {
         costMajorMatrix = new ArrayList<>();
         ArrayList<Edge> edges = new ArrayList<>();
 
-        readInputFile();
+        readInputFile(fileName);
 
         initializeVertices(networkGraph);
         createEdges(edges, networkGraph);
@@ -45,7 +46,7 @@ public class Network {
             Comparator<Edge> costOrder = Comparator.comparing(Edge::getCost).thenComparing(Edge::getReliability, Comparator.reverseOrder());
             Collections.sort(edges, costOrder);
         }
-         
+
         for(Edge edge : edges){
             System.out.println("SORTED EDGE WITH CITY " + (edge.source.getId() + 1)
                     + " AND CITY : " + (edge.destination.getId() + 1)
@@ -62,6 +63,8 @@ public class Network {
         // 1 - Only need to get largest target
         // 2 - Need to get reliability based on cost constraint
         // 3 - maximize reliability
+
+        // TO DO MAKE SURE IF EDGE DOESNT INCREASE RELIABILITY, PICK A NEW ONE.
 
         double currentReliability = spanningReliability;
         int currentCost = spanningCost;
@@ -87,15 +90,24 @@ public class Network {
         }
         //  meet constraint reliability
         else if (reliabilityConstraint == 2){
+            ArrayList<Edge> additionalEdges = new ArrayList<>();
             while (currentCost < targetCost && currentReliability < targetReliability){
-                Edge additionalEdge = getLowestAvailableCostEdge(networkGraph, edges);
-                updateGraph(networkGraph, additionalEdge);
+
+                if(additionalEdges.isEmpty()){
+                    // Grab next set of available edges
+                    additionalEdges = getLowestAvailableCostEdges(networkGraph, edges);
+                }
+
+                // only update with the first available low cost edge.
+                updateGraph(networkGraph, additionalEdges.get(0));
 
                 // ENUMERATION
                 ArrayList<Integer[]> combinationList = new ArrayList<>();
                 findCombination(networkGraph, combinationList);
                 currentReliability = calculateTotalReliability(networkGraph, combinationList);
                 currentCost = calculateTotalCost(networkGraph);
+
+                additionalEdges.remove(0);
 
             }
 
@@ -105,19 +117,53 @@ public class Network {
                 totalCost = currentCost;
                 displayGraphInformation(networkGraph);
             } else {
+                // remove
+                networkGraph.getNetworkEdges().remove(networkGraph.getNetworkEdges().size() - 1);
+
+                // if the first edge fails then try every other edges with the same cost. If no edges give high reliability then no design possible.
+                for (Edge edge : additionalEdges){
+
+                    // only update with the first available low cost edge.
+                    updateGraph(networkGraph, edge);
+
+                    // ENUMERATION
+                    ArrayList<Integer[]> combinationList = new ArrayList<>();
+                    findCombination(networkGraph, combinationList);
+                    currentReliability = calculateTotalReliability(networkGraph, combinationList);
+                    currentCost = calculateTotalCost(networkGraph);
+
+                    if (currentReliability >= targetReliability && currentCost <= targetCost) {
+                        System.out.println("OBTAINED TARGET RELIABILITY WITH COST CONSTRAINT");
+                        totalReliability = currentReliability;
+                        totalCost = currentCost;
+                        displayGraphInformation(networkGraph);
+                    }
+
+                    networkGraph.getNetworkEdges().remove(edge);
+
+                }
                 System.out.println("CANNOT FIND DESIGN WITH TARGET RELIABILITY : " + targetReliability + " AND COST : " + targetCost);
             }
 
         } else if (reliabilityConstraint == 3){
+            ArrayList<Edge> additionalEdges = new ArrayList<>();
             while (currentCost < targetCost){
-                Edge additionalEdge = getLowestAvailableCostEdge(networkGraph, edges);
-                updateGraph(networkGraph, additionalEdge);
+
+                if(additionalEdges.isEmpty()){
+                    // Grab next set of available edges
+                    additionalEdges = getLowestAvailableCostEdges(networkGraph, edges);
+                }
+
+                // only update with the first available low cost edge.
+                updateGraph(networkGraph, additionalEdges.get(0));
 
                 // ENUMERATION
                 ArrayList<Integer[]> combinationList = new ArrayList<>();
                 findCombination(networkGraph, combinationList);
                 currentReliability = calculateTotalReliability(networkGraph, combinationList);
                 currentCost = calculateTotalCost(networkGraph);
+
+                additionalEdges.remove(0);
 
             }
 
@@ -143,18 +189,17 @@ public class Network {
             int sourceId = i;
             for (int j = sourceId + 1 ; j < numberOfCities; j++){
                 int destinationId = j;
-                //System.out.println("ADDED EDGE WITH SOURCE : " + sourceId + " DESTINATION ID " + destinationId + " ACCESS VALUE OF MATRIX " + matrixIndex);
                 edges.add(new Edge(networkGraph.getVertex(sourceId), networkGraph.getVertex(destinationId), costMajorMatrix.get(matrixIndex), reliabilityMajorMatrix.get(matrixIndex)));
                 matrixIndex++;
             }
         }
     }
 
-    public static void readInputFile(){
+    public static void readInputFile(String fileName){
 
         int counter = 0;
         try {
-            File f = new File("./input.txt");
+            File f = new File(fileName);
             BufferedReader br = new BufferedReader(new FileReader(f));
             String readLine = "";
 
@@ -207,7 +252,54 @@ public class Network {
         combination(arr, data, 0 , n-1, 0, r, combinationValue);
     }
 
+    public static boolean checkCycle(Graph networkGraph){
+
+
+        return false;
+    }
+
+    public static void kruskalMST(Graph networkGraph, ArrayList<Edge> edges){
+        System.out.println("----- SPANNING EDGES -----");
+        for(Edge edge : edges){
+            networkGraph.addEdge(edge);
+            if(checkCycle(networkGraph)){
+                networkGraph.getNetworkEdges().remove(edge);
+                continue;
+            } else {
+
+                // Source Vertex
+                edge.source.addEdge(edge);
+                // add itself vertex, destination to source
+                HashSet<Vertex> hs = networkGraph.vertexMap.get(edge.source);
+                hs.add(edge.destination);
+                hs.add(edge.source);
+                networkGraph.vertexMap.put(edge.source, hs);
+                edge.source.addEdge(edge);
+
+                // add destination vertex itself, source to destination
+
+                HashSet<Vertex> hs2 = networkGraph.vertexMap.get(edge.destination);
+                hs2.add(edge.destination);
+                hs2.add(edge.source);
+                networkGraph.vertexMap.put(edge.destination, hs2);
+                edge.destination.addEdge(edge);
+
+                System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost );
+
+            }
+
+            // maximum number of edges of spanning tree done.
+            if(networkGraph.getNetworkEdges().size() != (networkGraph.vertexMap.keySet().size() - 1)){
+                break;
+            }
+
+        }
+
+    }
+
     public static void addEdgeToGraph(Graph networkGraph, ArrayList<Edge> edges){
+
+        System.out.println("----- SPANNING EDGES -----");
         for(Edge edge : edges){
 
             if(networkGraph.vertexMap.get(edge.source).size() == 1 || networkGraph.vertexMap.get(edge.destination).size() == 1){
@@ -234,6 +326,8 @@ public class Network {
                 networkGraph.addEdge(edge);
             }
         }
+
+        System.out.println("----- SPANNING END -----");
     }
 
     public static double calculateSpanningTreeReliability(Graph networkGraph){
@@ -287,13 +381,26 @@ public class Network {
         return newEdge;
     }
 
-    public static Edge getLowestAvailableCostEdge(Graph networkGraph, ArrayList<Edge> edges){
+
+    public static ArrayList<Edge> getLowestAvailableCostEdges(Graph networkGraph, ArrayList<Edge> edges){
+        ArrayList<Edge>  lowestAvailableCostEdges = new ArrayList<>();
+        boolean firstAvailableEdge = true;
+        int minimumAvailableCost = 0;
         for(Edge edge : edges){
             if(!networkGraph.getNetworkEdges().contains(edge)){
-                return edge;
+
+                if(firstAvailableEdge){
+                    lowestAvailableCostEdges.add(edge);
+                   minimumAvailableCost = edge.getCost();
+                   firstAvailableEdge = false;
+                }
+
+                else if (edge.getCost() == minimumAvailableCost){
+                    lowestAvailableCostEdges.add(edge);
+                }
             }
         }
-        return null;
+        return lowestAvailableCostEdges;
     }
 
     public static void findCombination(Graph networkGraph, ArrayList<Integer[]> combinationList){
@@ -362,7 +469,7 @@ public class Network {
         hs2.add(destination);
         networkGraph.vertexMap.put(destination, hs2);
 
-        System.out.println("UPDATE : ADD EDGE SOURCE ID : " + (source.getId() + 1) + " DEST ID : " + (destination.getId() + 1) + " RELIABILITY : " + edge.getReliability() + " COST : " + edge.getReliability());
+        System.out.println("UPDATE : ADD EDGE SOURCE ID : " + (source.getId() + 1) + " DEST ID : " + (destination.getId() + 1) + " RELIABILITY : " + edge.getReliability() + " COST : " + edge.getCost());
 
         networkGraph.addEdge(edge);
     }
@@ -385,7 +492,7 @@ public class Network {
 
         for (boolean visited : visitedVertices){
             if (!visited){
-                System.out.println("GRAPH NOT CONNECTED WITH THIS COMBINATION");
+                //System.out.println("GRAPH NOT CONNECTED WITH THIS COMBINATION");
                 return false;
             }
         }
@@ -419,9 +526,11 @@ public class Network {
                 }
             }
         } else {
+            // default values
             targetReliability = 0.85;
-            targetCost = 110;
+            targetCost = 200;
             reliabilityConstraint = 2;
+            fileName = "./input2.txt";
         }
     }
 
@@ -451,6 +560,7 @@ public class Network {
             System.out.println("DESIGN OPTIMIZED COST : " + totalCost);
         }
         System.out.println("----- END -----");
+        System.exit(0);
     }
 }
 
