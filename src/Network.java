@@ -1,10 +1,7 @@
-import com.sun.deploy.util.ArrayUtil;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class Network {
@@ -101,6 +98,11 @@ public class Network {
                 if(additionalEdges.isEmpty()){
                     // Grab next set of available edges
                     additionalEdges = getLowestAvailableCostEdges(networkGraph, edges);
+                    // VERIFIY IF THIS BREAK ANYTHING
+                    if(additionalEdges == null){
+                        // make sure if no more edges
+                        break;
+                    }
                 }
 
                 // only update with the first available low cost edge.
@@ -157,6 +159,10 @@ public class Network {
                 if(additionalEdges.isEmpty()){
                     // Grab next set of available edges
                     additionalEdges = getLowestAvailableCostEdges(networkGraph, edges);
+                    if(additionalEdges == null){
+                        // make sure if no more edges
+                        break;
+                    }
                 }
 
                 // only update with the first available low cost edge.
@@ -541,19 +547,25 @@ public class Network {
 
     public static void parseArguments(String[] args){
         if (args.length > 0){
-            // if args 2  then reliabilty and cost given
-            // if arg 1 -> cost or reliability
+            fileName = args[0];
+            // if args 3  then reliabilty and cost given
+            // if arg 2 -> cost or reliability
             if (args.length == 3){
-                targetReliability = Double.parseDouble(args[2]);
-                targetCost = Integer.parseInt(args[3]);
+
+                System.out.println("BOTH RELIABILITY AND COST");
+                targetReliability = Double.parseDouble(args[1]);
+                targetCost = Integer.parseInt(args[2]);
                 reliabilityConstraint = 2;
 
             } else if (args.length == 2){
-                if (Double.valueOf(args[1]) != null){
-                    targetReliability = Double.parseDouble(args[2]);
+                double value = Double.parseDouble(args[1]);
+                if (value < 1){
+                    System.out.println("ONLY RELIABILITY");
+                    targetReliability = Double.parseDouble(args[1]);
                     reliabilityConstraint = 1;
                 } else {
-                    targetCost = Integer.parseInt(args[2]);
+                    System.out.println("ONLY COST");
+                    targetCost = Integer.parseInt(args[1]);
                     reliabilityConstraint = 3;
                 }
             }
