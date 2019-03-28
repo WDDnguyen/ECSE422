@@ -153,6 +153,10 @@ public class Network {
             }
 
         } else if (reliabilityConstraint == 3){
+
+            double newReliability;
+            int newCost;
+
             ArrayList<Edge> additionalEdges = new ArrayList<>();
             while (currentCost < targetCost){
 
@@ -171,12 +175,22 @@ public class Network {
                 // ENUMERATION
                 ArrayList<Integer[]> combinationList = new ArrayList<>();
                 findCombination(networkGraph, combinationList);
-                currentReliability = calculateTotalReliability(networkGraph, combinationList);
-                currentCost = calculateTotalCost(networkGraph);
+
+                newReliability = calculateTotalReliability(networkGraph, combinationList);
+                newCost = calculateTotalCost(networkGraph);
+
+                if (newCost > targetCost){
+                    removeNetworkEdge(networkGraph, additionalEdges.get(0));
+                    break;
+                } else {
+                    currentReliability = newReliability;
+                    currentCost = newCost;
+                }
 
                 additionalEdges.remove(0);
 
             }
+
 
          //   System.out.println("MAXIMIZED RELIABILITY WITH COST CONSTRAINT");
             totalReliability = currentReliability;
@@ -316,7 +330,7 @@ public class Network {
                     }
                 }
             } else {
-                System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost);
+             //   System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost);
             }
         }
        // System.out.println("----- SPANNING EDGES DONE -----");
