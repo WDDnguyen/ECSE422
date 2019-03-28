@@ -50,15 +50,15 @@ input3.txt : 6 nodes with different cost and reliability than input.txt <br/>
 Based on provided arguments, output and behavior of program changes <br/>
 If reliability argument given, only display edges and reliability <br/>
 
-![reliabilityOnly](/images/reliabilityOnly.png)
+![reliabilityOnly](/images/reliabilityOnly.PNG)
 
 If reliability and cost argument given, try to find a possible solution with given reliability with cost. Possible of having no solution depending on the 2 arguments. <br/>
 
-![reliabilityAndConstraint](/images/reliabilityAndConstraint.png)
+![reliabilityAndConstraint](/images/reliabilityAndConstraint.PNG)
 
 If cost argument given, calculate the maximum reliability until cost contraint is surpassed. <br/>
 
-![maximizeReliability](/images/reliabilityOnly.png)
+![maximizeReliability](/images/reliabilityOnly.PNG)
 
 # Description of program
 Program is designed to create a network with all-to-all reliability.
