@@ -301,7 +301,7 @@ public class Network {
     }
 
     public static void kruskalMST(Graph networkGraph, ArrayList<Edge> edges){
-      //  System.out.println("----- SPANNING EDGES -----");
+        //System.out.println("----- SPANNING EDGES -----");
         for(Edge edge : edges){
             networkGraph.addEdge(edge);
             addNetworkEdge(networkGraph, edge);
@@ -309,17 +309,17 @@ public class Network {
                 if(hasCycle(networkGraph)){
                     removeNetworkEdge(networkGraph,edge);
                 } else {
-                  //  System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost);
+                   // System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost);
                     // maximum number of edges of spanning tree done.
                     if (networkGraph.getNetworkEdges().size() == (networkGraph.vertexMap.keySet().size() - 1)) {
                         break;
                     }
                 }
             } else {
-                //System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost);
+                System.out.println("ADDED EDGE SOURCE ID : " + (edge.source.getId() + 1) + " DEST ID : " + (edge.destination.getId() + 1) + " RELIABILITY : " + edge.reliability + " COST : " + edge.cost);
             }
         }
-        //System.out.println("----- SPANNING EDGES DONE -----");
+       // System.out.println("----- SPANNING EDGES DONE -----");
 
     }
 
@@ -583,11 +583,13 @@ public class Network {
 
         System.out.println("----- NETWORK DESIGN -----");
         System.out.println("----- EDGES -----");
+        System.out.println("Connected edges : ");
         for(Edge edge : finalEdges){
-            System.out.println("NETWORK HAS EDGE WITH CITY " + (edge.source.getId() + 1)
-            + " AND CITY : " + (edge.destination.getId() + 1)
-            + " EDGE RELIABILITY : " + edge.getReliability()
-            + " EDGE COST : " + edge.getCost());
+            System.out.println(" [" + (edge.source.getId() + 1) + ", " + (edge.destination.getId() + 1) + "]");
+//            System.out.println("NETWORK HAS EDGE WITH CITY " + (edge.source.getId() + 1)
+//            + " AND CITY : " + (edge.destination.getId() + 1)
+//            + " EDGE RELIABILITY : " + edge.getReliability()
+//            + " EDGE COST : " + edge.getCost());
         }
         System.out.println("NETWORK HAS TOTAL EDGE : " + networkGraph.getNetworkEdges().size());
         System.out.println("----- RELIABILITY -----");
