@@ -7,18 +7,31 @@ Terminal/Command line or IDE to compile and run the program. <br/>
 ## How to run program
 In src folder  <br/> 
 run command : javac Network.java </br>
-run command : java Network arg1 arg2 arg3 <br/>
+run command : java Network ["path/filename"] [reliability] [cost] <br/>
 
 Program takes minimum 1 argument and maximum of 3 arguments <br/>
-Necessary input : input.txt file with correct format <br/>
+First argument is necessary, input.txt file with the correct format <br/>
+
+# Example of running the program
+For part A (Meet reliability goal) <br/>
+Reliability goal : 0.85 <br/>
+<b> java Network "../input.txt" 0.85 </b> <br/>
+
+For part B (Meet a given reliability goal subject to a given cost constraint) <br/>
+Reliability goal : 0.85 <br/>
+Cost constraint : 75 <br/>
+<b> java Network "../input.txt" 0.85 75 </b> <br/>
+
+For part C (Maximize reliability subject to a given cost constraint) <br/>
+Cost constraint : 75 <br/>
+<b> java Network "../input.txt" 75 </b> <br/>
 
 ## Format for input file
 
 Input should only have 3 lines containing no # <br/>
-
-1- number of nodes <br/>
-2- reliability major matrix <br/>
-3- cost major matrix <br/>
+1- N number of nodes <br/>
+2- N(N-1)/2 numbers of reliability values. This represents the reliability major matrix <br/>
+3- N(N-1)/2 numbers cost values. This represents the cost major matrix <br/>
 
 ### Example
 6 <br/>
@@ -34,20 +47,27 @@ input3.txt : 6 nodes with different cost and reliability than input.txt <br/>
 
 ## Output
 
-Based on provided arguments, output and behavior of program changes
-If reliability argument given, only display edges and reliability
-If cost argument given, calculate the maximum reliability until cost contraint is surpassed.
-If reliability and cost argument given, try to find a possible solution with given reliability with cost. Possible of having no solution depending on the 2 arguments.
+Based on provided arguments, output and behavior of program changes <br/>
+If reliability argument given, only display edges and reliability <br/>
+
+SHOW IMAGE
+
+If reliability and cost argument given, try to find a possible solution with given reliability with cost. Possible of having no solution depending on the 2 arguments. <br/>
+
+SHOW IMAGE
+
+If cost argument given, calculate the maximum reliability until cost contraint is surpassed. <br/>
 
 SHOW IMAGE 
 
 # Description of program
 Program is designed to create a network with all-to-all reliability.
 
-From input text, the program sort the edges depending on reliability or cost and create a spanning tree using kruskal.
-Given the constraint, the network graph spanning tree add edges with the highest relialibity or lowest cost will be added. This calculate the new reliability, if edge doesn't attain the reliability then keep adding additional edge. To calculate the reliability, using exhaustive method to calculate the graph.
+From input text, the program initialize a network graph with N number of vertices and N(N-1)/2 edges.
+After parsing the edges, the edges are sorted based on either reliability or cost. A spanning tree is produced using kruskal algorithm with the sorted edges.
+If the reliability of spanning tree doesn't meet the goals, the spanning tree add an edge with the highest reliability or lowest cost. The reliability and cost is recalculated with the edge in the network graph. If the goal isn't obtained, keep adding additional edge until no more edge can be added. The reliability is calculated using exhaustive method.
 
-When graph maxed out constraint and obtained target then network will output  all edges and 
+When goal is met, the network outputs a design with the number of edges and the link between each link.
 
 
 
