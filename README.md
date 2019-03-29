@@ -69,6 +69,9 @@ If the reliability of spanning tree doesn't meet the goals, the spanning tree ad
 
 When goal is met, the network outputs a design with the number of edges and the link between each link.
 
+## Limitation of program
+Program is quick and can calculate up to 18-20 edges before slowing down when applying exhaustive method to find reliability of additional edges.
+
 
 
 
