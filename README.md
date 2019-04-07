@@ -58,7 +58,7 @@ If reliability and cost argument given, try to find a possible solution with giv
 
 If cost argument given, calculate the maximum reliability until cost contraint is surpassed. <br/>
 
-![maximizeReliability](/images/reliabilityOnly.PNG)
+![maximizeReliability](/images/costConstraintOnly.PNG)
 
 # Description of program
 Program is designed to create a network with all-to-all reliability.
